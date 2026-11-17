@@ -115,3 +115,7 @@ example), and anything that reconnects it from the desktop (a bar widget, a tray
 running in Game Mode. With the VPN's kill switch on, all traffic is blocked while the tunnel is
 down, so Steam has no internet. Turn the kill switch off, or check that your VPN reconnects
 without a desktop session, before relying on Game Mode.
+
+**If a switch hangs, check the journal.** The switch helper logs each stage (waiting for Steam,
+restarting the login manager, restoring the boot default) to the journal. If a switch ever
+hangs, `journalctl -u 'omarchy-gamemode-switch-*'` shows how far it got.
