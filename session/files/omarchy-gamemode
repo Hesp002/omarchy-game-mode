@@ -6,5 +6,12 @@ if ! sudo -n /usr/local/lib/omarchy-gamemode/set-session game; then
   exit 1
 fi
 # A desktop Steam would block the switch for up to 30 s; ask it to quit now.
-pgrep -x steam >/dev/null && steam -shutdown >/dev/null 2>&1
+if pgrep -x steam >/dev/null; then
+  msg="Closing Steam, then switching. This can take up to 30 seconds."
+  steam -shutdown >/dev/null 2>&1
+else
+  msg="Logging out of the desktop in a moment."
+fi
+notify-send -t 30000 "Switching to Game Mode" "$msg" 2>/dev/null
+echo "Switching to Game Mode: $msg"
 exit 0

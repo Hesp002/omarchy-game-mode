@@ -4,7 +4,11 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 LIB=/usr/local/lib/omarchy-gamemode
+source "$here/../lib/common.sh"
 
+echo "Uninstalling Game Mode (session variant). sudo may ask for your password."
+
+step "Removing Game Mode files, settings and sudoers rule"
 sudo rm -f /etc/sudoers.d/omarchy-gamemode \
            /etc/sddm.conf.d/zz-omarchy-gamemode.conf \
            /etc/omarchy-gamemode.conf \
@@ -12,6 +16,7 @@ sudo rm -f /etc/sudoers.d/omarchy-gamemode \
            /usr/local/share/applications/omarchy-gamemode.desktop \
            /usr/local/bin/omarchy-gamemode
 sudo rm -rf "$LIB"
+step "Resetting the login screen's remembered session"
 # Don't leave the greeter preselecting a session that no longer exists.
 if sudo grep -qs 'omarchy-gamemode.desktop' /var/lib/sddm/state.conf; then
   for s in hyprland-uwsm.desktop hyprland.desktop; do
@@ -21,12 +26,14 @@ if sudo grep -qs 'omarchy-gamemode.desktop' /var/lib/sddm/state.conf; then
     fi
   done
 fi
-echo "Removed Game Mode session, helper, sudoers rule and SDDM override."
+info "Done. SDDM's normal login behaviour returns on the next boot."
 
 if [[ ${1:-} == --packages && -f $here/.installed-packages ]]; then
+  step "Removing packages the installer added"
   mapfile -t pkgs < "$here/.installed-packages"
   sudo pacman -Rns "${pkgs[@]}" && rm -f "$here/.installed-packages"
 elif [[ -f $here/.installed-packages ]]; then
-  echo "Packages installed by install.sh kept: $(tr '\n' ' ' < "$here/.installed-packages")"
-  echo "Run './uninstall.sh --packages' to remove them too."
+  step "Keeping packages"
+  info "Kept: $(tr '\n' ' ' < "$here/.installed-packages")"
+  info "Run uninstall with --packages to remove them too."
 fi

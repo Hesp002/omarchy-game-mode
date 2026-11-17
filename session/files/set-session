@@ -45,16 +45,22 @@ case ${1:-} in
   game|desktop)
     write_autologin "$(session_for "$1")"
     [[ $1 == desktop ]] && preselect_desktop
+    echo "Switching to $1; restart scheduled (log: journalctl -u 'omarchy-gamemode-switch-*')"
     # Run the restart outside the calling session, which is about to end.
     systemd-run --quiet --collect --unit="omarchy-gamemode-switch-$(date +%s)" "$SELF" --apply
     ;;
   --apply)
     # Give Steam up to 30 s to shut down cleanly (cloud saves) before the session is killed.
+    # Output goes to the journal: journalctl -u 'omarchy-gamemode-switch-*'
+    echo "Waiting for Steam to exit..."
     for _ in $(seq 30); do pgrep -u "$USER_NAME" -x steam >/dev/null || break; sleep 1; done
+    pgrep -u "$USER_NAME" -x steam >/dev/null && echo "Steam still running after 30 s; switching anyway."
+    echo "Restarting the display manager (next login: $(grep '^Session=' "$SDDM_CONF" | cut -d= -f2-))"
     systemctl restart display-manager
     # SDDM reads autologin only when it starts, so restore the boot default once it's up.
     sleep 10
     write_autologin "$(session_for "$BOOT_TO")"
+    echo "Restored boot default: $BOOT_TO"
     ;;
   --boot)
     [[ ${2:-} =~ ^(game|desktop|greeter)$ ]] || { echo "usage: set-session --boot game|desktop|greeter" >&2; exit 2; }

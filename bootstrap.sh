@@ -30,6 +30,7 @@ main() {
 
   if [[ $action == uninstall ]]; then
     [[ -x $dest/$variant/uninstall.sh ]] || { echo "Nothing to uninstall: $dest/$variant not found." >&2; exit 1; }
+    echo "Running $variant/uninstall.sh $*"
     "$dest/$variant/uninstall.sh" "$@" </dev/tty
     # Remove the source only when nothing still depends on it.
     if [[ -L $HOME/.local/bin/game-mode || -f /etc/omarchy-gamemode.conf ]] ||
@@ -47,6 +48,7 @@ main() {
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
   curl -fsSL "https://codeload.github.com/$repo/tar.gz/$ref" | tar -xz -C "$tmp" --strip-components=1
+  echo "Unpacking to $dest"
 
   # Carry over package lists from a previous install so uninstall --packages still works.
   local v
@@ -58,6 +60,7 @@ main() {
   mv "$tmp" "$dest"
   trap - EXIT
 
+  echo "Running $variant/install.sh $*"
   "$dest/$variant/install.sh" "$@" </dev/tty
 }
 

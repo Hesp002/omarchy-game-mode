@@ -41,6 +41,8 @@ fi
 GAMESCOPE_ARGS=${GAMESCOPE_ARGS:---xwayland-count 2 --hide-cursor-delay 3000 --fade-out-duration 200}
 
 # Keep the laptop from sleeping or locking because the (backgrounded) desktop sees no input.
+echo "Starting gamescope + Steam. The screen may stay black for a while on Steam's first start"
+echo "(it downloads its updates). Use Steam ▸ Power ▸ Switch to Desktop to come back here."
 # shellcheck disable=SC2086
 systemd-inhibit --what=idle:sleep:handle-lid-switch --who=game-mode --why="Game Mode running" \
   gamescope -e $GAMESCOPE_ARGS -- steam -gamepadui -steamos3 -steampal -steamdeck
