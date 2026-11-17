@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# game-mode — SteamOS-style "Game Mode" from a spare TTY.
+# Usage: Ctrl+Alt+F3, log in, run `game-mode`. Ctrl+Alt+F2 returns to Hyprland.
+set -uo pipefail
+
+SHIMS="$HOME/.local/share/omarchy-game-mode/shims"
+
+if [[ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]] || [[ "$(tty)" != /dev/tty* ]]; then
+  echo "game-mode: run this from a text console (Ctrl+Alt+F3), not inside Hyprland." >&2
+  exit 1
+fi
+for bin in gamescope steam; do
+  command -v "$bin" >/dev/null || { echo "game-mode: $bin not installed (run install.sh)." >&2; exit 1; }
+done
+
+# Steam is single-instance: a copy running on the desktop would swallow this launch.
+if pgrep -x steam >/dev/null; then
+  echo "Steam is already running (probably on the desktop). Shutting it down..."
+  steam -shutdown >/dev/null 2>&1
+  for _ in $(seq 30); do pgrep -x steam >/dev/null || break; sleep 1; done
+  pgrep -x steam >/dev/null && { echo "game-mode: Steam didn't exit; close it and retry." >&2; exit 1; }
+fi
+
+# Steam in -steamos3 mode calls steamos-session-select, steamos-update, etc.
+export PATH="$SHIMS:$PATH"
+unset WAYLAND_DISPLAY DISPLAY HYPRLAND_INSTANCE_SIGNATURE
+
+# SteamOS-like client features
+export STEAM_ENABLE_VOLUME_HANDLER=1
+export STEAM_GAMESCOPE_VRR_SUPPORTED=1
+export STEAM_GAMESCOPE_HAS_TEARING_SUPPORT=1
+export STEAM_MULTIPLE_XWAYLANDS=1
+export SRT_URLOPEN_PREFER_STEAM=1
+export QT_IM_MODULE=steam GTK_IM_MODULE=Steam
+if command -v mangoapp >/dev/null; then
+  export STEAM_USE_MANGOAPP=1 STEAM_MANGOAPP_PRESETS_SUPPORTED=1 STEAM_DISABLE_MANGOAPP_ATOM_WORKAROUND=1
+fi
+
+# Override or add flags with GAMESCOPE_ARGS="..." in ~/.config/omarchy-game-mode.conf
+[[ -f "$HOME/.config/omarchy-game-mode.conf" ]] && source "$HOME/.config/omarchy-game-mode.conf"
+GAMESCOPE_ARGS=${GAMESCOPE_ARGS:---xwayland-count 2 --hide-cursor-delay 3000 --fade-out-duration 200}
+
+# Keep the laptop from sleeping or locking because the (backgrounded) desktop sees no input.
+# shellcheck disable=SC2086
+systemd-inhibit --what=idle:sleep:handle-lid-switch --who=game-mode --why="Game Mode running" \
+  gamescope -e $GAMESCOPE_ARGS -- steam -gamepadui -steamos3 -steampal -steamdeck
+status=$?
+
+echo
+echo "Game Mode exited ($status). Ctrl+Alt+F2 returns to the desktop."

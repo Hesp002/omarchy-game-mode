@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Game Mode session (started by SDDM): gamescope as the compositor, Steam's gamepad UI inside.
+# When Steam exits, gamescope exits and the session ends.
+
+export PATH="/usr/local/lib/omarchy-gamemode/bin:$PATH"   # SteamOS helper stand-ins
+
+# SteamOS-like Steam client features
+export STEAM_ENABLE_VOLUME_HANDLER=1
+export STEAM_GAMESCOPE_VRR_SUPPORTED=1
+export STEAM_GAMESCOPE_HAS_TEARING_SUPPORT=1
+export STEAM_MULTIPLE_XWAYLANDS=1
+export SRT_URLOPEN_PREFER_STEAM=1
+export QT_IM_MODULE=steam GTK_IM_MODULE=Steam
+if command -v mangoapp >/dev/null; then
+  export STEAM_USE_MANGOAPP=1 STEAM_MANGOAPP_PRESETS_SUPPORTED=1 STEAM_DISABLE_MANGOAPP_ATOM_WORKAROUND=1
+fi
+
+# Per-user overrides, e.g. GAMESCOPE_ARGS="--xwayland-count 2 -O DP-1,*"
+GAMESCOPE_ARGS="--xwayland-count 2 --hide-cursor-delay 3000 --fade-out-duration 200"
+[[ -f "$HOME/.config/omarchy-gamemode.conf" ]] && source "$HOME/.config/omarchy-gamemode.conf"
+
+# shellcheck disable=SC2086
+exec gamescope -e $GAMESCOPE_ARGS -- steam -gamepadui -steamos3 -steampal -steamdeck

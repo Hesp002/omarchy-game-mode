@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# No OS updates here (pacman handles that). Exit 7 = "no update available" to Steam.
+exit 7

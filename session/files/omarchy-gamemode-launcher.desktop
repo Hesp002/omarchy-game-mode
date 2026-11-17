@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Game Mode
+Comment=Log out and switch to Steam Game Mode
+Exec=/usr/local/bin/omarchy-gamemode
+Icon=steam
+Type=Application
+Categories=Game;

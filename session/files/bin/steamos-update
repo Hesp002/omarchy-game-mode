@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# OS updates come from pacman / omarchy-update. Exit 7 = "no update available" to Steam.
+exit 7

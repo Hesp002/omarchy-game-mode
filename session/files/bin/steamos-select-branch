@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# SteamOS update channel. There is none here; always report stable.
+[[ ${1:-} == "-c" ]] && echo stable
+exit 0

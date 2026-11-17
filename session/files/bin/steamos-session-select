@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Steam's "Switch to Desktop" calls this with a desktop name (plasma, plasma-wayland-persistent,
+# desktop, ...) and "gamescope" to come back. Anything but gamescope means the desktop.
+target=desktop
+[[ ${1:-} == gamescope ]] && target=game
+sudo -n /usr/local/lib/omarchy-gamemode/set-session "$target" ||
+  echo "steamos-session-select: switch not permitted; ending session instead" >&2
+# Quitting Steam ends gamescope and the session; set-session restarts SDDM after.
+steam -shutdown >/dev/null 2>&1 &

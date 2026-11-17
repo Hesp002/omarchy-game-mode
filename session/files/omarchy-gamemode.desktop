@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Game Mode (Steam)
+Comment=Steam Big Picture in gamescope, SteamOS-style
+Exec=/usr/local/lib/omarchy-gamemode/session
+Type=Application
+DesktopNames=gamescope

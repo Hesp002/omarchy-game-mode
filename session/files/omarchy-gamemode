@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Switch from the desktop to Game Mode (logs out of Hyprland).
+if ! sudo -n /usr/local/lib/omarchy-gamemode/set-session game; then
+  notify-send -u critical "Game Mode" "Couldn't switch sessions (sudoers rule missing?)" 2>/dev/null
+  echo "omarchy-gamemode: couldn't switch sessions (is /etc/sudoers.d/omarchy-gamemode installed?)" >&2
+  exit 1
+fi
+# A desktop Steam would block the switch for up to 30 s; ask it to quit now.
+pgrep -x steam >/dev/null && steam -shutdown >/dev/null 2>&1
+exit 0

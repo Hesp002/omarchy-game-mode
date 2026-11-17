@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Steam Deck BIOS updater — never applicable here. Firmware updates: fwupd.
+exit 0

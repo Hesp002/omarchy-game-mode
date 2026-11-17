@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Root helper: picks which session SDDM logs into next, then restarts SDDM to switch.
+#   set-session game|desktop     switch now (the only forms allowed without a password)
+#   set-session --boot game|desktop|greeter   change what the machine boots into
+#   set-session --reset          rewrite SDDM autologin to the boot default
+#   set-session --apply          internal: wait for Steam, restart SDDM, restore boot default
+set -euo pipefail
+
+SELF=/usr/local/lib/omarchy-gamemode/set-session
+CONF=/etc/omarchy-gamemode.conf
+SDDM_CONF=/etc/sddm.conf.d/zz-omarchy-gamemode.conf
+SDDM_STATE=/var/lib/sddm/state.conf
+GAME_SESSION=omarchy-gamemode.desktop
+
+[[ $EUID -eq 0 ]] || { echo "set-session: must run as root" >&2; exit 1; }
+# shellcheck source=/dev/null
+source "$CONF"   # USER_NAME, BOOT_TO, DESKTOP_LOGIN, DESKTOP_SESSION
+
+# Session file SDDM should autologin into for a target; empty = show the greeter.
+session_for() {
+  case $1 in
+    game)    echo "$GAME_SESSION" ;;
+    desktop) [[ $DESKTOP_LOGIN == autologin ]] && echo "$DESKTOP_SESSION" || echo "" ;;
+    greeter) echo "" ;;
+  esac
+}
+
+# Always write explicit values: empty User= overrides any autologin the Omarchy ISO set up.
+write_autologin() {
+  local session=$1 user=$USER_NAME tmp
+  [[ -z $session ]] && user=""
+  tmp=$(mktemp "$SDDM_CONF.XXXXXX")
+  printf '[Autologin]\nUser=%s\nSession=%s\nRelogin=false\n' "$user" "$session" > "$tmp"
+  chmod 644 "$tmp"
+  mv "$tmp" "$SDDM_CONF"
+}
+
+# When the greeter is shown for the desktop, preselect the desktop, not Game Mode.
+preselect_desktop() {
+  [[ -f $SDDM_STATE ]] || return 0
+  sed -i "s|^Session=.*|Session=/usr/share/wayland-sessions/$DESKTOP_SESSION|" "$SDDM_STATE"
+}
+
+case ${1:-} in
+  game|desktop)
+    write_autologin "$(session_for "$1")"
+    [[ $1 == desktop ]] && preselect_desktop
+    # Run the restart outside the calling session, which is about to end.
+    systemd-run --quiet --collect --unit="omarchy-gamemode-switch-$(date +%s)" "$SELF" --apply
+    ;;
+  --apply)
+    # Give Steam up to 30 s to shut down cleanly (cloud saves) before the session is killed.
+    for _ in $(seq 30); do pgrep -u "$USER_NAME" -x steam >/dev/null || break; sleep 1; done
+    systemctl restart display-manager
+    # SDDM reads autologin only when it starts, so restore the boot default once it's up.
+    sleep 10
+    write_autologin "$(session_for "$BOOT_TO")"
+    ;;
+  --boot)
+    [[ ${2:-} =~ ^(game|desktop|greeter)$ ]] || { echo "usage: set-session --boot game|desktop|greeter" >&2; exit 2; }
+    sed -i "s|^BOOT_TO=.*|BOOT_TO=$2|" "$CONF"
+    BOOT_TO=$2
+    write_autologin "$(session_for "$BOOT_TO")"
+    echo "Boots into: $BOOT_TO"
+    ;;
+  --reset)
+    write_autologin "$(session_for "$BOOT_TO")"
+    ;;
+  *)
+    echo "usage: set-session game|desktop | --boot game|desktop|greeter | --reset" >&2
+    exit 2
+    ;;
+esac
