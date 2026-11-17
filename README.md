@@ -13,6 +13,21 @@ Both install Steam, gamescope and the Vulkan drivers for every GPU found (`lib/g
 AMD/Intel Mesa, NVIDIA 32-bit userspace matching the installed driver), and both have an
 uninstall script (`--packages` also removes what the installer added).
 
+## Quick install
+
+    # full session variant (boots into Game Mode)
+    curl -fsSL https://raw.githubusercontent.com/Hesp002/omarchy-game-mode/main/bootstrap.sh | bash
+
+    # with options / the tty variant / uninstall
+    curl -fsSL https://raw.githubusercontent.com/Hesp002/omarchy-game-mode/main/bootstrap.sh | bash -s -- install session --boot-to desktop --desktop-login greeter
+    curl -fsSL https://raw.githubusercontent.com/Hesp002/omarchy-game-mode/main/bootstrap.sh | bash -s -- install tty
+    curl -fsSL https://raw.githubusercontent.com/Hesp002/omarchy-game-mode/main/bootstrap.sh | bash -s -- uninstall session --packages
+
+The bootstrap keeps the downloaded repo in `~/.local/share/omarchy-game-mode-src` (uninstall
+needs it) and then runs the variant's `install.sh` with your options. Pin a version with
+`OGM_REF=<tag|commit>`. Prefer to read before running? `git clone` the repo and run
+`session/install.sh` or `tty/install.sh` directly; it does the same thing.
+
 ## session/ — how it works
 
     ./install.sh [--boot-to game|desktop|greeter] [--desktop-login autologin|greeter] [--with-mangohud]
