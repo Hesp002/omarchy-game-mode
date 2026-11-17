@@ -106,3 +106,12 @@ Stand-ins for the SteamOS helpers Steam calls in `-steamos3` mode live in
 `/usr/local/lib/omarchy-gamemode/bin` (on PATH only inside the session):
 `steamos-session-select` (switch), `steamos-update` (always "no update", exit 7),
 `jupiter-biosupdate` (no-op), `steamos-select-branch` (always "stable").
+
+## Notes
+
+**VPN kill switches can leave Game Mode offline.** Switching sessions logs you out of the
+desktop, which usually drops a VPN tunnel that belongs to your user (Proton VPN's, for
+example), and anything that reconnects it from the desktop (a bar widget, a tray app) isn't
+running in Game Mode. With the VPN's kill switch on, all traffic is blocked while the tunnel is
+down, so Steam has no internet. Turn the kill switch off, or check that your VPN reconnects
+without a desktop session, before relying on Game Mode.
